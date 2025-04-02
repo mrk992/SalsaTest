@@ -1,6 +1,6 @@
 # SalsaTest Backend - Technical Test
 
-This project is an implementation of the backend technical test for **Salsa.dev**, developed using **Java 21** and **Spring Boot 3**, following a **hexagonal architecture** (Ports & Adapters).
+This project is an implementation of the backend technical test for **Salsa.dev**, developed using **Java 21** and **Spring Boot 3**, following a **clean architecture inspired by hexagonal principles**.
 
 ---
 
@@ -12,20 +12,18 @@ This project is an implementation of the backend technical test for **Salsa.dev*
 - Spring Security + JWT
 - Redis (for rate limiting)
 - Lombok
-- MapStruct (DTO mapping)
 - Maven
 
 ---
 
 ## 🏢 Chosen Architecture
 
-A **hexagonal architecture (ports and adapters)** approach has been followed to separate domain logic from infrastructure.
+A **clean architecture inspired by hexagonal design** has been used. The goal was to keep the code modular and testable, without introducing too much complexity for an MVP. While the classic port/adapter structure was simplified, adopting a full hexagonal architecture in the future would be straightforward.
 
 ```
 com.salsa.test.salsa
 ├── domain
 │   ├── model          -> Pure domain classes
-│   ├── port           -> Interfaces for adapters
 │   └── service        -> Domain services
 ├── infra
 │   ├── persistence    -> JPA repositories
@@ -48,16 +46,16 @@ com.salsa.test.salsa
 
 ### 💼 Job Offers
 - Basic CRUD + search by:
-    - Title
-    - Location
-    - Salary → `maxSalary >= salary`
+  - Title
+  - Location
+  - Salary → `maxSalary >= salary`
 
 ### 📊 Ranking
 - Based on rules:
-    - Recent offers (< 7 days)
-    - Higher salary
-    - More open jobs
-- Reorderable and extendable rules via config
+  - Recent offers (< 7 days)
+  - Higher salary
+  - More open jobs
+- Implemented using the **Strategy pattern**, making rules reorderable and extendable via config
 
 ### 📄 Pagination
 - Built-in pagination support
@@ -84,16 +82,39 @@ Params:
   - page, size, sort
 ```
 
+```http
+GET /api/job-offers/{id}
+```
+
+```http
+POST /api/job-offers
+Content-Type: application/json
+Body:
+{
+  "title": "Backend Dev",
+  "companyId": "uuid",
+  "companyName": "Salsa",
+  "description": "Job description",
+  "jobType": "FULL_TIME",
+  "salaryMin": 1000,
+  "salaryMax": 2000,
+  "benefits": [],
+  "extras": []
+}
+```
+
 ---
 
 ## 📁 Sample Data
 
-Preloaded via `data.sql`:
+Preloaded via `data.sql` (for MVP only):
 
 | username    | password  | role      |
 |-------------|-----------|-----------|
 | empleador1  | password  | EMPLOYER  |
 | empleado1   | password  | EMPLOYEE  |
+
+> In a production system, something like **Flyway** or **Liquibase** should be used for migrations.
 
 ---
 
@@ -108,7 +129,7 @@ Preloaded via `data.sql`:
 docker-compose up -d redis
 ```
 
-### 2. Start Spring Boot
+### 2. Start the App
 ```bash
 ./mvnw spring-boot:run
 ```
@@ -123,10 +144,15 @@ Password:
 
 ---
 
-## 🧪 Tests
+## 🧰 Tests
+
+### Run All Tests
+```bash
+./mvnw test
+```
 
 - Unit and integration tests
-- Authentication, filtering, ranking
+- Coverage for login, filters, ranking, controllers
 
 ---
 
@@ -139,19 +165,15 @@ Password:
 
 ---
 
-## 🧾 Design Clarifications
+## 📋 Design Clarifications
 
-This project follows a lightweight **hexagonal architecture** for separation of concerns, though the folder structure has been simplified by omitting detailed `port/adapter` layers, in order to keep the implementation lean for a technical test and MVP scope.
-
-The **ranking logic** uses the **Strategy pattern**, allowing new ranking rules to be added easily without modifying existing code. Rule priority is configurable via application properties.
-
-Salary filtering supports both "greater than or equal to" and range queries (e.g., searching with `salary=1000` will match offers with `maxSalary >= 1000`).
-
-Error handling is basic (bean validation + 400) and does not include a global exception handler due to time constraints. A typical error handler in Spring Boot uses `@ControllerAdvice` + `@ExceptionHandler`.
-
-The optional background workers were not implemented, but the intended approach would be to queue ranking calculations when offers are created, and store ranked results in a cache like Redis to speed up searches.
-
-**Scalability**: The system supports pagination, filtering, stateless JWT auth (for horizontal scaling), Redis-based rate limiting, and a modular structure that allows easy integration with scalable tools like Elasticsearch, Kafka, or distributed caches.
+- Used a **clean architecture inspired by hexagonal**. Avoided full port/adapter complexity for MVP simplicity.
+- **Ranking** is implemented with the **Strategy pattern**. Rules are easy to add and reorder via config.
+- Salary filtering uses `maxSalary >= salary`. Example: `salary=1500` matches offers with up to `maxSalary=2000`.
+- Global error handler (`@ControllerAdvice`) was not included due to time limits.
+- Preloaded data with `data.sql` for demo. In future, **Liquibase** or **Flyway** would be preferred.
+- Background workers were not implemented, but plan is to cache rankings post-creation for fast searches.
+- System is designed for scalability: pagination, stateless JWT auth, Redis rate limiting, modular logic.
 
 ---
 
@@ -159,14 +181,11 @@ The optional background workers were not implemented, but the intended approach 
 
 Developed by Marcos Rojas as part of the technical test for Salsa.dev
 
-For questions or suggestions, open an issue or reach out.  
-Thank you 🚀
-
 ---
 
 # SalsaTest Backend - Prueba Técnica
 
-Este proyecto es una implementación de la prueba técnica de backend para la empresa **Salsa.dev**, desarrollada en **Java 21** con **Spring Boot 3**, siguiendo una **arquitectura hexagonal** (Ports & Adapters).
+Este proyecto es una implementación de la prueba técnica de backend para **Salsa.dev**, desarrollada en **Java 21** con **Spring Boot 3**, siguiendo una **arquitectura limpia inspirada en hexagonal**.
 
 ---
 
@@ -178,20 +197,18 @@ Este proyecto es una implementación de la prueba técnica de backend para la em
 - Spring Security + JWT
 - Redis (para rate limiting)
 - Lombok
-- MapStruct
 - Maven
 
 ---
 
 ## 🏢 Arquitectura elegida
 
-Se ha seguido un enfoque **hexagonal** para separar la lógica de dominio de la infraestructura.
+Se ha seguido una **arquitectura limpia inspirada en hexagonal** para mantener el código modular y testable, sin la complejidad del patrón completo `port/adapter`. En caso de necesitarse, adoptar una arquitectura hexagonal teórica sería sencillo.
 
 ```
 com.salsa.test.salsa
 ├── domain
 │   ├── model
-│   ├── port
 │   └── service
 ├── infra
 │   ├── persistence
@@ -207,30 +224,30 @@ com.salsa.test.salsa
 ## 🛠️ Componentes principales
 
 ### 🔐 Seguridad
-- Autenticación JWT
+- Autenticación JWT sin estado
 - Usuarios en H2
 - Rate limiting con Redis
-- Consola H2 solo en dev
+- Consola H2 solo en desarrollo
 
-### 💼 Ofertas
-- CRUD básico + filtros por:
-    - Título
-    - Localización
-    - Salario → `maxSalary >= salary`
+### 💼 Ofertas de empleo
+- CRUD + búsqueda por:
+  - Título
+  - Localización
+  - Salario → `maxSalary >= salary`
 
 ### 📊 Ranking
 - Reglas:
-    - Ofertas recientes (< 7 días)
-    - Mayor salario
-    - Más ofertas abiertas
-- Reglas ordenables y extendibles vía config
+  - Ofertas recientes (< 7 días)
+  - Mayor salario
+  - Más vacantes abiertas
+- Implementado con patrón **Strategy**, orden configurable desde `application.yml`
 
 ### 📄 Paginación
-- Soporte `Pageable` nativo
+- Soporte nativo con `Pageable`
 
 ---
 
-## ✅ Endpoints
+## ✅ Endpoints principales
 
 ### 🔐 Autenticación
 ```http
@@ -249,16 +266,39 @@ Parámetros:
   - page, size, sort
 ```
 
+```http
+GET /api/job-offers/{id}
+```
+
+```http
+POST /api/job-offers
+Content-Type: application/json
+Body:
+{
+  "title": "Backend Dev",
+  "companyId": "uuid",
+  "companyName": "Salsa",
+  "description": "Job description",
+  "jobType": "FULL_TIME",
+  "salaryMin": 1000,
+  "salaryMax": 2000,
+  "benefits": [],
+  "extras": []
+}
+```
+
 ---
 
 ## 📁 Datos de ejemplo
 
-Precargados vía `data.sql`:
+Precargados desde `data.sql` (para MVP):
 
 | usuario     | contraseña | rol       |
 |-------------|------------|-----------|
 | empleador1  | password   | EMPLOYER  |
 | empleado1   | password   | EMPLOYEE  |
+
+> En producción debería usarse algo como **Liquibase** o **Flyway**.
 
 ---
 
@@ -273,12 +313,12 @@ Precargados vía `data.sql`:
 docker-compose up -d redis
 ```
 
-### 2. Iniciar la app
+### 2. Iniciar la aplicación
 ```bash
 ./mvnw spring-boot:run
 ```
 
-### 3. Acceder a H2
+### 3. Consola H2
 ```
 http://localhost:8080/h2-console
 JDBC URL: jdbc:h2:mem:jobsdb
@@ -288,10 +328,15 @@ Password:
 
 ---
 
-## 🧪 Tests
+## 🧰 Tests
 
-- Unitarios e integración
-- Login, filtros, ranking
+### Ejecutar tests
+```bash
+./mvnw test
+```
+
+- Tests unitarios y de integración
+- Login, filtros, ranking, controladores
 
 ---
 
@@ -299,24 +344,20 @@ Password:
 
 - Filtro por tipo de contrato
 - Filtro por beneficios
-- Orden de reglas desde BBDD
+- Reglas configurables desde BBDD
 - Workers en Redis o RabbitMQ
 
 ---
 
-## 🧾 Aclaraciones
+## 📋 Aclaraciones
 
-He usado una arquitectura **hexagonal** pero con estructura simplificada (sin `port/adapter` explícitos) para enfocarme en la lógica del test y no sobrecargar el diseño.
-
-El sistema de **ranking** sigue el patrón **Strategy**, para facilitar la adición de nuevas reglas. El orden se configura desde `application.yml`.
-
-En los filtros de búsqueda, el salario se considera válido si `maxSalary >= salary` (ej. búsqueda con `salary=1000` encuentra ofertas con hasta 1500).
-
-No he implementado un `@ControllerAdvice` por tiempo, pero sería ideal para centralizar errores en producción.
-
-Para los workers opcionales, planteo usar colas que procesen rankings tras la creación de una oferta y cachear los resultados.
-
-**Escalabilidad**: Se usa paginación, JWT sin estado (escalado horizontal), rate limiting con Redis y una estructura extensible que permite fácilmente integrar herramientas como Elasticsearch, colas de mensajes o cachés distribuidas.
+- Arquitectura **limpia inspirada en hexagonal**, sin la complejidad del patrón completo para este MVP.
+- El **ranking** usa patrón **Strategy**, permitiendo fácil extensión y configuración.
+- El filtro de salario busca `maxSalary >= salary`. Ejemplo: `salary=1500` encuentra hasta 2000.
+- Por tiempo, no se incluyó `@ControllerAdvice` para manejar errores globales.
+- `data.sql` se usa solo como base de datos de ejemplo. En futuro se podría usar Liquibase/Flyway.
+- Workers opcionales no implementados. Idealmente se cachearían rankings al crear ofertas.
+- Diseñado para escalar: paginación, auth JWT sin estado, rate limit con Redis, estructura modular.
 
 ---
 
@@ -324,5 +365,3 @@ Para los workers opcionales, planteo usar colas que procesen rankings tras la cr
 
 Desarrollado por Marcos Rojas como parte de la prueba técnica para Salsa.dev
 
-Para dudas o sugerencias, contáctame o abre una incidencia.  
-¡Gracias! 🚀

@@ -1,9 +1,7 @@
 package com.salsa.test.salsa.infra.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.salsa.test.salsa.domain.model.UserRole;
-import com.salsa.test.salsa.infra.entity.UserEntity;
-import com.salsa.test.salsa.infra.persistence.repository.UserRepository;
+import com.salsa.test.salsa.application.AuthService;
 import com.salsa.test.salsa.infra.rest.dto.LoginRequest;
 import com.salsa.test.salsa.infra.security.JwtService;
 import com.salsa.test.salsa.infra.security.RateLimitFilter;
@@ -15,14 +13,17 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Optional;
+import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -33,53 +34,44 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
-  @MockitoBean
-  private UserRepository userRepository;
-
-  @MockitoBean
-  private JwtService jwtService;
-
   @Autowired
   private MockMvc mockMvc;
 
   @Autowired
   private ObjectMapper objectMapper;
 
-  @Test
-  void shouldLoginSuccessfully() throws Exception {
-    UserEntity user = new UserEntity("1", "empleador1", "password", UserRole.EMPLOYER);
-    when(userRepository.findByUsername("empleador1")).thenReturn(Optional.of(user));
-    when(jwtService.generateToken("1", "EMPLOYER")).thenReturn("mocked-jwt");
+  @MockitoBean
+  private AuthService authService;
 
+  @MockitoBean
+  private JwtService jwtService;
+
+  @Test
+  void shouldReturnTokenWhenLoginIsSuccessful() throws Exception {
     LoginRequest request = new LoginRequest("empleador1", "password");
+
+    ResponseEntity<Map<String, String>> response = ResponseEntity.ok(Map.of(
+        "token", "mocked-jwt-token",
+        "role", "EMPLOYER"
+    ));
+
+    when(authService.login(any(LoginRequest.class))).thenReturn(response);
 
     mockMvc.perform(post("/auth/login")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").value("mocked-jwt"))
+        .andExpect(jsonPath("$.token").value("mocked-jwt-token"))
         .andExpect(jsonPath("$.role").value("EMPLOYER"));
   }
 
   @Test
-  void shouldReturnUnauthorizedForWrongPassword() throws Exception {
-    UserEntity user = new UserEntity("1", "empleador1", "wrongpass", UserRole.EMPLOYER);
-    when(userRepository.findByUsername("empleador1")).thenReturn(Optional.of(user));
+  void shouldReturnUnauthorizedWhenLoginFails() throws Exception {
+    LoginRequest request = new LoginRequest("empleador1", "wrongpassword");
 
-    LoginRequest request = new LoginRequest("empleador1", "password");
-
-    mockMvc.perform(post("/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-        .andExpect(status().isUnauthorized())
-        .andExpect(jsonPath("$.error").value("User or pass incorrect"));
-  }
-
-  @Test
-  void shouldReturnUnauthorizedForNonexistentUser() throws Exception {
-    when(userRepository.findByUsername("noUser")).thenReturn(Optional.empty());
-
-    LoginRequest request = new LoginRequest("noUser", "password");
+    when(authService.login(any())).thenReturn(ResponseEntity
+        .status(HttpStatus.UNAUTHORIZED)
+        .body(Map.of("error", "User or pass incorrect")));
 
     mockMvc.perform(post("/auth/login")
             .contentType(MediaType.APPLICATION_JSON)

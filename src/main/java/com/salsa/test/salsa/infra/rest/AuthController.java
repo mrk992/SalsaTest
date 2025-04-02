@@ -1,11 +1,8 @@
 package com.salsa.test.salsa.infra.rest;
 
 
-import com.salsa.test.salsa.infra.persistence.mapper.UserMapper;
-import com.salsa.test.salsa.infra.persistence.repository.UserRepository;
+import com.salsa.test.salsa.application.AuthService;
 import com.salsa.test.salsa.infra.rest.dto.LoginRequest;
-import com.salsa.test.salsa.infra.security.JwtService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,28 +15,15 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
-  private final UserRepository userRepository;
-  private final JwtService jwtService;
 
-  public AuthController(UserRepository userRepository, JwtService jwtService) {
-    this.userRepository = userRepository;
-    this.jwtService = jwtService;
+  private final AuthService authService;
+
+  public AuthController(AuthService authService) {
+    this.authService = authService;
   }
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-    return userRepository.findByUsername(request.username())
-        .map(UserMapper::toDomain)
-        .filter(user -> user.getPassword().equals(request.password()))
-        .map(user -> {
-          String token = jwtService.generateToken(user.getId(), user.getRole().name());
-          return ResponseEntity.ok(Map.of(
-              "token", token,
-              "role", user.getRole().name()
-          ));
-        })
-        .orElse(ResponseEntity
-            .status(HttpStatus.UNAUTHORIZED)
-            .body(Map.of("error", "User or pass incorrect")));
+  public ResponseEntity<Map<String,String>> login(@RequestBody LoginRequest request) {
+    return authService.login(request);
   }
 }

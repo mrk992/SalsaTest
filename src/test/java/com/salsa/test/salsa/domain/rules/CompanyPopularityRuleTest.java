@@ -36,7 +36,7 @@ class CompanyPopularityRuleTest {
 
   @Test
   void shouldSortOffersByCompanyPopularityDescending() {
-    List<JobOffer> unordered = List.of(offer3, offer1, offer2); // companyA has 2 offers
+    List<JobOffer> unordered = List.of(offer3, offer1, offer2);
     List<JobOffer> sorted = rule.apply(unordered);
 
     assertEquals(3, sorted.size());

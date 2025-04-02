@@ -4,7 +4,6 @@ import com.salsa.test.salsa.domain.model.JobOffer;
 import com.salsa.test.salsa.domain.rules.OrderRule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.ApplicationContext;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,7 +18,6 @@ import static org.mockito.Mockito.when;
 
 class JobOfferRankingServiceTest {
 
-  private ApplicationContext context;
   private OrderRule ruleA;
   private OrderRule ruleB;
 
@@ -28,7 +26,6 @@ class JobOfferRankingServiceTest {
 
   @BeforeEach
   void setUp() {
-    context = mock(ApplicationContext.class);
     ruleA = mock(OrderRule.class);
     ruleB = mock(OrderRule.class);
 
@@ -45,7 +42,6 @@ class JobOfferRankingServiceTest {
     rulesMap.put("ruleA", ruleA);
     rulesMap.put("ruleB", ruleB);
 
-    when(context.getBeansOfType(OrderRule.class)).thenReturn(rulesMap);
   }
 
   @Test
@@ -57,7 +53,7 @@ class JobOfferRankingServiceTest {
     when(ruleA.apply(input)).thenReturn(afterRuleA);
     when(ruleB.apply(afterRuleA)).thenReturn(afterRuleB);
 
-    JobOfferRankingService service = new JobOfferRankingService(context, List.of("ruleA", "ruleB"));
+    JobOfferRankingService service = new JobOfferRankingService(List.of("ruleA", "ruleB"));
     List<JobOffer> result = service.rank(input);
 
     assertEquals(afterRuleB, result);
@@ -67,16 +63,15 @@ class JobOfferRankingServiceTest {
   void shouldSkipUnknownRules() {
     List<JobOffer> input = List.of(offer1, offer2);
 
-    // ruleC no existe en el contexto
-    JobOfferRankingService service = new JobOfferRankingService(context, List.of("ruleC"));
+    JobOfferRankingService service = new JobOfferRankingService(List.of("ruleC"));
     List<JobOffer> result = service.rank(input);
 
-    assertEquals(input, result); // nada cambia
+    assertEquals(input, result);
   }
 
   @Test
   void shouldHandleEmptyRuleList() {
-    JobOfferRankingService service = new JobOfferRankingService(context, List.of());
+    JobOfferRankingService service = new JobOfferRankingService(List.of());
     List<JobOffer> result = service.rank(List.of(offer1, offer2));
 
     assertEquals(List.of(offer1, offer2), result);
@@ -84,7 +79,7 @@ class JobOfferRankingServiceTest {
 
   @Test
   void shouldReturnEmptyWhenNoOffers() {
-    JobOfferRankingService service = new JobOfferRankingService(context, List.of("ruleA"));
+    JobOfferRankingService service = new JobOfferRankingService(List.of("ruleA"));
     when(ruleA.apply(List.of())).thenReturn(List.of());
 
     List<JobOffer> result = service.rank(List.of());

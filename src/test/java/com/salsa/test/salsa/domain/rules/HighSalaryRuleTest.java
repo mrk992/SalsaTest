@@ -61,7 +61,7 @@ class HighSalaryRuleTest {
 
     assertEquals(offerHigh, result.get(0));
     assertEquals(offerLow, result.get(1));
-    assertEquals(offerNoSalary, result.get(2)); // debe ir al final
+    assertEquals(offerNoSalary, result.get(2));
   }
 
   @Test

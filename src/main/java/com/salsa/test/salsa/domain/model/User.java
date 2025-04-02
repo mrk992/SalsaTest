@@ -8,6 +8,6 @@ import lombok.Data;
 public class User {
   private String id;
   private String username;
-  private String password; // en la vida real, iría encriptada
+  private String password;
   private UserRole role;
 }

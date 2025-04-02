@@ -28,6 +28,13 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<jackarta.servlet.version>6.1.0</jackarta.servlet.version>
+		<jjwt.api.version>0.11.5</jjwt.api.version>
+		<jjwt.impl.version>0.11.5</jjwt.impl.version>
+		<jjwt.jackson.version>0.11.5</jjwt.jackson.version>
+		<jakarta.validation.version>3.0.2</jakarta.validation.version>
+		<hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
+
 	</properties>
 	<dependencies>
 		<dependency>
@@ -78,7 +85,7 @@
 		<dependency>
 			<groupId>jakarta.servlet</groupId>
 			<artifactId>jakarta.servlet-api</artifactId>
-			<version>6.1.0</version>
+			<version>${jackarta.servlet.version}</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -86,37 +93,31 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.impl.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.jackson.version}</version>
 			<scope>runtime</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.mapstruct</groupId>
-			<artifactId>mapstruct</artifactId>
-			<version>1.5.5.Final</version>
 		</dependency>
 
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.0.2</version>
+			<version>${jakarta.validation.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>8.0.1.Final</version>
+			<version>${hibernate.validator.version}</version>
 		</dependency>
 
 	</dependencies>
