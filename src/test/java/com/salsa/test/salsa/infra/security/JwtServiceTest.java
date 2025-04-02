@@ -4,37 +4,63 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JwtServiceTest {
 
-  private com.salsa.test.salsa.infra.security.JwtService jwtService;
+  private JwtService jwtService;
+  private String userId;
+  private String role;
+  private String token;
 
   @BeforeEach
   void setUp() {
-    jwtService = new com.salsa.test.salsa.infra.security.JwtService();
+    jwtService = new JwtService();
+    userId = "12345";
+    role = "EMPLOYER";
+    token = jwtService.generateToken(userId, role);
   }
 
   @Test
-  void shouldGenerateAndValidateTokenSuccessfully() {
-    String userId = "user123";
-    String token = jwtService.generateToken(userId, "role");
+  void shouldGenerateValidToken() {
+    assertNotNull(token);
+    assertFalse(token.isBlank());
+  }
 
-    String extractedSubject = jwtService.validateAndGetSubject(token);
+  @Test
+  void shouldValidateTokenAndReturnUserId() {
+    String extractedId = jwtService.validateAndGetSubject(token);
+    assertEquals(userId, extractedId);
+  }
 
-    assertEquals(userId, extractedSubject);
+  @Test
+  void shouldExtractRoleFromToken() {
+    String extractedRole = jwtService.getRoleFromToken(token);
+    assertEquals(role, extractedRole);
   }
 
   @Test
   void shouldThrowExceptionForInvalidToken() {
-    String invalidToken = "ey.this.is.not.valid";
+    String invalidToken = token + "tampered";
 
-    Exception exception = assertThrows(RuntimeException.class, () -> {
-      jwtService.validateAndGetSubject(invalidToken);
-    });
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        jwtService.validateAndGetSubject(invalidToken)
+    );
 
-    assertTrue(exception.getMessage().contains("Token JWT inválido"));
+    assertTrue(exception.getMessage().contains("Invalid JWT token"));
   }
 
+  @Test
+  void shouldThrowExceptionWhenGettingRoleFromInvalidToken() {
+    String invalidToken = token + "broken";
+
+    RuntimeException exception = assertThrows(RuntimeException.class, () ->
+        jwtService.getRoleFromToken(invalidToken)
+    );
+
+    assertTrue(exception.getMessage().contains("Unable to extract role from JWT token"));
+  }
 }

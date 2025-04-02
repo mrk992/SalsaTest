@@ -1,77 +1,131 @@
 package com.salsa.test.salsa.infra.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.salsa.test.salsa.application.JobOfferService;
+import com.salsa.test.salsa.domain.model.JobOffer;
+import com.salsa.test.salsa.domain.model.SalaryRange;
+import com.salsa.test.salsa.domain.model.SearchCriteria;
+import com.salsa.test.salsa.infra.rest.dto.JobOfferRequest;
+import com.salsa.test.salsa.infra.rest.dto.JobOfferResponse;
+import com.salsa.test.salsa.infra.rest.mapper.JobOfferWebMapper;
+import com.salsa.test.salsa.infra.security.JwtAuthFilter;
+import com.salsa.test.salsa.infra.security.JwtService;
+import com.salsa.test.salsa.infra.security.RateLimitFilter;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.salsa.test.salsa.domain.model.JobType.FULL_TIME;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(JobOfferController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(JobOfferControllerTest.MockBeans.class)
 class JobOfferControllerTest {
-/*
+
   @Autowired
   private MockMvc mockMvc;
 
   @Autowired
   private ObjectMapper objectMapper;
 
-  private JobOffer exampleOffer;
+  @MockitoBean
+  private JobOfferService jobOfferService;
 
-  @BeforeEach
-  void setup() {
-    exampleOffer = new JobOffer(
-        UUID.randomUUID(),
-        "Backend Developer",
-        "TechCorp",
-        "Barcelona",
-        "Desarrollo backend con Java",
-        JobType.FULL_TIME,
-        new SalaryRange(3000, 4500),
-        List.of("Seguro médico", "Comida gratis"),
-        List.of("Opción de stock"),
-        null // se seteará en el servicio
-    );
+  @MockitoBean
+  private JobOfferWebMapper webMapper;
+
+  @Test
+  void shouldReturnJobOffersPage() throws Exception {
+    JobOffer jobOffer = new JobOffer(UUID.randomUUID(), "Java Dev", UUID.randomUUID(), "Company", "Remote", "Desc", FULL_TIME, null, List.of(), List.of(), LocalDateTime.now());
+    JobOfferResponse response = new JobOfferResponse(UUID.randomUUID(), "Java Dev", UUID.randomUUID(), "Company", "Remote", "FULL_TIME", FULL_TIME, 0L, 0L, List.of(), List.of(), LocalDateTime.now());
+
+    when(jobOfferService.search(any(SearchCriteria.class), any())).thenReturn(new PageImpl<>(List.of(jobOffer)));
+    when(webMapper.toResponse(any(JobOffer.class))).thenReturn(response);
+
+    mockMvc.perform(get("/api/job-offers"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content[0].jobTitle").value("Java Dev"));
   }
 
   @Test
-  void shouldCreateAndGetJobOffer() throws Exception {
-    // Crear oferta
-    String json = objectMapper.writeValueAsString(exampleOffer);
-    String response = mockMvc.perform(post("/api/job-offers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
-        .andExpect(status().isOk())
-        .andReturn().getResponse().getContentAsString();
+  void shouldReturnJobOfferById() throws Exception {
+    UUID id = UUID.randomUUID();
+    JobOffer jobOffer = new JobOffer(id, "Backend", UUID.randomUUID(), "Company", "Remote", "Desc", FULL_TIME, new SalaryRange(1L, 2L), List.of(), List.of(), LocalDateTime.now());
+    JobOfferResponse response = new JobOfferResponse(id, "Backend", UUID.randomUUID(), "Company", "Remote", "FULL_TIME", FULL_TIME, 0L, 0L, List.of(), List.of(), LocalDateTime.now());
 
-    UUID createdId = UUID.fromString(response.replace("\"", ""));
+    when(jobOfferService.findById(id)).thenReturn(Optional.of(jobOffer));
+    when(webMapper.toResponse(jobOffer)).thenReturn(response);
 
-    // Obtener la oferta creada
-    mockMvc.perform(get("/api/job-offers/" + createdId))
+    mockMvc.perform(get("/api/job-offers/" + id))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.jobTitle").value("Backend Developer"));
+        .andExpect(jsonPath("$.jobTitle").value("Backend"));
   }
 
   @Test
-  void shouldReturnNotFoundForInvalidId() throws Exception {
-    mockMvc.perform(get("/api/job-offers/" + UUID.randomUUID()))
+  void shouldReturnNotFoundWhenJobOfferDoesNotExist() throws Exception {
+    UUID id = UUID.randomUUID();
+    when(jobOfferService.findById(id)).thenReturn(Optional.empty());
+
+    mockMvc.perform(get("/api/job-offers/" + id))
         .andExpect(status().isNotFound());
   }
 
   @Test
-  void shouldReturnAllJobOffers() throws Exception {
-    mockMvc.perform(get("/api/job-offers"))
+  void shouldCreateJobOffer() throws Exception {
+    JobOfferRequest request = new JobOfferRequest("Backend", UUID.randomUUID(), "Company", "Desc", "FULL_TIME", FULL_TIME, 1L, 2L, List.of(), List.of());
+    JobOffer jobOffer = new JobOffer(UUID.randomUUID(), "Backend", UUID.randomUUID(), "Company", "Remote", "Desc", FULL_TIME, null, List.of(), List.of(), LocalDateTime.now());
+    JobOfferResponse response = new JobOfferResponse(jobOffer.id(), "Backend", jobOffer.companyId(), "Company", "Remote", "FULL_TIME", FULL_TIME, 0L, 0L, List.of(), List.of(), jobOffer.createdAt());
+
+    when(webMapper.toDomain(request)).thenReturn(jobOffer);
+    when(webMapper.toResponse(jobOffer)).thenReturn(response);
+
+    mockMvc.perform(post("/api/job-offers")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk());
   }
 
-  @Test
-  void shouldDeleteJobOffer() throws Exception {
-    String json = objectMapper.writeValueAsString(exampleOffer);
-    String response = mockMvc.perform(post("/api/job-offers")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(json))
-        .andReturn().getResponse().getContentAsString();
+  @TestConfiguration
+  static class MockBeans {
+    @Bean
+    public RateLimitFilter rateLimitFilter() {
+      return Mockito.mock(RateLimitFilter.class);
+    }
 
-    UUID createdId = UUID.fromString(response.replace("\"", ""));
+    @Bean
+    public JwtAuthFilter jwtAuthFilter() {
+      return Mockito.mock(JwtAuthFilter.class);
+    }
 
-    mockMvc.perform(delete("/api/job-offers/" + createdId))
-        .andExpect(status().isNoContent());
-  }*/
+    @Bean
+    public JwtService jwtService() {
+      return Mockito.mock(JwtService.class);
+    }
+
+    @Bean
+    public StringRedisTemplate stringRedisTemplate() {
+      return Mockito.mock(StringRedisTemplate.class);
+    }
+  }
 }
