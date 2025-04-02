@@ -49,7 +49,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       SecurityContextHolder.getContext().setAuthentication(authentication);
     } catch (Exception e) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-      response.getWriter().write("Token inválido");
+      response.getWriter().write("Invalid Token");
       return;
     }
 

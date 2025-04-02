@@ -1,7 +1,9 @@
 package com.salsa.test.salsa.infra.rest.dto;
 
 import com.salsa.test.salsa.domain.model.JobType;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,4 +37,5 @@ public record JobOfferRequest(
     List<@NotBlank(message = "Benefit cannot be blank") String> benefits,
 
     List<@NotBlank(message = "Extra cannot be blank") String> extras
-) {}
+) {
+}

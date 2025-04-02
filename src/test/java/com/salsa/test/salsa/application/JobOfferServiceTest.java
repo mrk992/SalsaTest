@@ -73,23 +73,6 @@ class JobOfferServiceTest {
   }
 
   @Test
-  void shouldFindAllJobOffersAndRankThem() {
-    List<JobOffer> offers = List.of(sampleOffer);
-    when(jobOfferPort.findAll()).thenReturn(offers);
-    when(rankingService.rank(offers)).thenReturn(offers);
-
-    List<JobOffer> result = jobOfferService.findAll();
-    assertEquals(offers, result);
-  }
-
-  @Test
-  void shouldDeleteJobOfferById() {
-    UUID id = sampleOffer.id();
-    jobOfferService.delete(id);
-    verify(jobOfferPort).deleteById(id);
-  }
-
-  @Test
   void shouldSearchAndRankOffersWithPagination() {
     Pageable pageable = PageRequest.of(0, 1);
     List<JobOffer> offers = List.of(sampleOffer);

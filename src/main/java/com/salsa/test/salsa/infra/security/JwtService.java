@@ -13,15 +13,12 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-  // IMPORTANT: Replace this with a securely stored secret in production!
   private static final String SECRET = "this_is_a_super_secure_jwt_secret_key_123456";
   private static final long EXPIRATION_MS = 1000 * 60 * 60; // 1 hour
 
   private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
 
-  /**
-   * Generates a JWT token for a user with their role embedded.
-   */
+
   public String generateToken(String userId, String role) {
     return Jwts.builder()
         .setSubject(userId)
@@ -32,9 +29,6 @@ public class JwtService {
         .compact();
   }
 
-  /**
-   * Validates a JWT and returns the user ID (subject).
-   */
   public String validateAndGetSubject(String token) {
     try {
       Claims claims = Jwts.parserBuilder()
@@ -48,9 +42,6 @@ public class JwtService {
     }
   }
 
-  /**
-   * Extracts the user's role from a JWT.
-   */
   public String getRoleFromToken(String token) {
     try {
       Claims claims = Jwts.parserBuilder()

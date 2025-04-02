@@ -88,7 +88,7 @@ class JwtAuthFilterTest {
     jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
     assertEquals(401, response.getStatus());
-    assertEquals("Token inválido", response.getContentAsString());
+    assertEquals("Invalid Token", response.getContentAsString());
     assertNull(SecurityContextHolder.getContext().getAuthentication());
 
     verify(filterChain, never()).doFilter(any(), any());
